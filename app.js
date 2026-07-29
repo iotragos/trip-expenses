@@ -20,14 +20,14 @@ const balancesDiv = document.getElementById("balances");
 // Load people
 people.forEach(person => {
 
-    let div = document.createElement("div");
+    const div = document.createElement("div");
     div.className = "person";
     div.innerHTML = person;
 
     peopleDiv.appendChild(div);
 
 
-    let option = document.createElement("option");
+    const option = document.createElement("option");
     option.value = person;
     option.textContent = person;
 
@@ -39,7 +39,7 @@ people.forEach(person => {
 function addExpense() {
 
     const description =
-        document.getElementById("description").value;
+        document.getElementById("description").value.trim();
 
     const amount =
         Number(document.getElementById("amount").value);
@@ -48,35 +48,40 @@ function addExpense() {
         document.getElementById("payer").value;
 
 
-    if (!description || !amount) {
-        alert("Please enter description and amount");
+    if (!description || !amount || amount <= 0) {
+        alert("Please enter a valid description and amount");
         return;
     }
 
 
     expenses.push({
-        description,
-        amount,
-        payer,
+        id: Date.now(),
+        description: description,
+        amount: amount,
+        payer: payer,
         date: new Date().toLocaleDateString()
     });
 
 
     saveExpenses();
 
+
     document.getElementById("description").value = "";
     document.getElementById("amount").value = "";
+
 
     render();
 }
 
 
-// Save
+// Save expenses
 function saveExpenses() {
+
     localStorage.setItem(
         "expenses",
         JSON.stringify(expenses)
     );
+
 }
 
 
@@ -85,29 +90,34 @@ function renderExpenses() {
 
     expensesDiv.innerHTML = "";
 
+
     if (expenses.length === 0) {
+
         expensesDiv.innerHTML = "No expenses yet.";
+
         return;
     }
 
 
-    expenses.forEach((expense, index) => {
+    expenses.forEach(expense => {
 
-        let div = document.createElement("div");
+        const div = document.createElement("div");
 
         div.className = "expense";
 
+
         div.innerHTML = `
-        <b>${expense.description}</b><br>
-        €${expense.amount.toFixed(2)}
-        paid by ${expense.payer}
-        <br>
-        ${expense.date}
-        <br>
-        <button onclick="deleteExpense(${index})">
-        Delete
-        </button>
+            <b>${expense.description}</b><br>
+            $${expense.amount.toFixed(2)}
+            paid by ${expense.payer}
+            <br>
+            ${expense.date}
+            <br>
+            <button onclick="deleteExpense(${expense.id})">
+                🗑 Erase
+            </button>
         `;
+
 
         expensesDiv.appendChild(div);
 
@@ -117,9 +127,20 @@ function renderExpenses() {
 
 
 // Delete expense
-function deleteExpense(index) {
+function deleteExpense(id) {
 
-    expenses.splice(index, 1);
+    const confirmDelete =
+        confirm("Erase this payment?");
+
+
+    if (!confirmDelete) {
+        return;
+    }
+
+
+    expenses =
+        expenses.filter(expense => expense.id !== id);
+
 
     saveExpenses();
 
@@ -133,14 +154,17 @@ function renderBalances() {
 
     let balance = {};
 
+
     people.forEach(person => {
+
         balance[person] = 0;
+
     });
 
 
     expenses.forEach(expense => {
 
-        let share =
+        const share =
             expense.amount / people.length;
 
 
@@ -148,7 +172,9 @@ function renderBalances() {
 
 
         people.forEach(person => {
+
             balance[person] -= share;
+
         });
 
     });
@@ -159,12 +185,10 @@ function renderBalances() {
 
     people.forEach(person => {
 
-        let value =
-            balance[person];
+        const value = balance[person];
 
 
-        let div =
-            document.createElement("div");
+        const div = document.createElement("div");
 
 
         if (value >= 0) {
@@ -172,14 +196,14 @@ function renderBalances() {
             div.className = "balance-positive";
 
             div.innerHTML =
-            `${person} should receive €${value.toFixed(2)}`;
+            `${person} should receive $${value.toFixed(2)}`;
 
         } else {
 
             div.className = "balance-negative";
 
             div.innerHTML =
-            `${person} owes €${Math.abs(value).toFixed(2)}`;
+            `${person} owes $${Math.abs(value).toFixed(2)}`;
 
         }
 
